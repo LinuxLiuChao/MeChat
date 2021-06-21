@@ -9,9 +9,7 @@ class EchoHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         print("login: {}".format(self.request.headers))
-        cookie = self.get_cookie("username")
 
-        print("EchoHandler get cookie: {}".format(cookie))
         self.write("hello client")
 
     @tornado.web.authenticated
