@@ -12,7 +12,7 @@ class Status(IntEnum):
 def status_text(code):
     status_message = {
         Status.SUCCESS: "Ok",
-        Status.INVALID_PASSWORD: "Invalid password",
+        Status.INVALID_PASSWORD: "Invalid username or password",
         Status.RE_LOG_IN: "Please log in agent"
     }
     return status_message.get(code, "Undefined error")

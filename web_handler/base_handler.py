@@ -1,7 +1,10 @@
+import sqlite3
+
 import tornado.web
 import tornado.websocket
 import jwt
 from common.const_str import USER_NAME, JWT_TOKEN, EXP
+from common.settings import sqlite3_host
 from web_handler.status_const import response_msg
 
 jwt_key = "7460d7cb-bcea-4fbe-87ec-d116123beda4"
@@ -13,7 +16,7 @@ class MeBase:
         self.client_address = None
 
 
-class BaseHandler(tornado.web.RequestHandler):
+class BaseHandler(tornado.web.RequestHandler, MeBase):
     def create_jwt_token(self, user_name, expires_time):
         payload = {
             USER_NAME: user_name,
