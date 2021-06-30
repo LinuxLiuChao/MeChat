@@ -9,6 +9,10 @@ class Status(IntEnum):
     RE_LOG_IN = 401
 
 
+class MessageStatus(IntEnum):
+    SUCCESS = 0
+    FAILED = 1
+
 def status_text(code):
     status_message = {
         Status.SUCCESS: "Ok",

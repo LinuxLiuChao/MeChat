@@ -15,15 +15,26 @@ class ChatHandler:
                                              on_close=self.on_close)
         self.is_connected = False
         self.user_name = None
+        self.user_id = None
+        print(dir(self.ws_cli))
 
     def on_open(self, ws):
         print("open connection success!!!\n")
         self.is_connected = True
         ws.send({"username": "Alice"})
+        print("on_open : {}".format(ws.recv()))
         pass
 
     def on_message(self, ws, message):
         message = json.loads(message)
+        status = message.get("status")
+        print("on_message: {}".format(message))
+        if message.get("type") == "login":
+            print("login status: {}".format(status))
+            if message.get("type") == "login" and status == "success":
+                self.user_id = message.get("text")
+            return
+
         from_user, from_msg = message.get("from"), message.get("message")
         if any((from_user, from_msg)) is False: return
 
@@ -75,7 +86,7 @@ class MeChatClient(ChatHandler):
     def send_message_to(self, to_user, message):
         message = {
             "type": "chat",
-            "from": self.user_name,
+            "from": self.user_id,
             "to": to_user,
             "message": message
         }
@@ -85,7 +96,7 @@ class MeChatClient(ChatHandler):
 if __name__ == "__main__":
     user_name = input("Please input your name: ")
     to_user = input("Please input send to message user_name: ")
-    client = MeChatClient("ws://localhost:8888/chat")
+    client = MeChatClient("ws://localhost:9888/chat")
     client.run()
     client.send_user_info(user_name)
     while True:
