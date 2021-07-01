@@ -70,6 +70,9 @@ class ChatHandler:
             time.sleep(1)
             self.run_forever()
 
+    def set_cookie(self, cookie):
+        self.ws_cli.cookie = cookie
+
 
 class MeChatClient(ChatHandler):
     def run(self):
@@ -83,7 +86,7 @@ class MeChatClient(ChatHandler):
         self.user_name = user_name
         self.send_message(user_info)
 
-    def send_message_to(self, to_user, message):
+    def send_message_to_user(self, to_user, message):
         message = {
             "type": "chat",
             "from": self.user_id,
@@ -101,4 +104,4 @@ if __name__ == "__main__":
     client.send_user_info(user_name)
     while True:
         message = input(">>>: ")
-        client.send_message_to(to_user, message)
+        client.send_message_to_user(to_user, message)
