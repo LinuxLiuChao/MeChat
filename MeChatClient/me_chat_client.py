@@ -7,7 +7,8 @@ import websocket
 
 
 class ChatHandler:
-    def __init__(self, url):
+    def __init__(self, host, port):
+        url = f"ws://{host}:{port}/chat"
         self.ws_cli = websocket.WebSocketApp(url,
                                              on_open=self.on_open,
                                              on_message=self.on_message,
@@ -16,7 +17,7 @@ class ChatHandler:
         self.is_connected = False
         self.user_name = None
         self.user_id = None
-        print(dir(self.ws_cli))
+        # print(dir(self.ws_cli))
 
     def on_open(self, ws):
         print("open connection success!!!\n")
