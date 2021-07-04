@@ -28,6 +28,8 @@ class BaseHandler(tornado.web.RequestHandler, MeBase):
     def get_current_user(self):
         jwt_token = self.get_secure_cookie(JWT_TOKEN)
         try:
+            if isinstance(jwt_token, str):
+                jwt_token = jwt_token.encode('utf-8')
             data = jwt.decode(jwt_token, jwt_key, algorithms=jwt_algorithm)
         except Exception as err:
             print("jwt.decode Exception: {}".format(err))
@@ -59,6 +61,7 @@ class WsBaseHandler(tornado.websocket.WebSocketHandler, MeBase):
         if not self.get_current_user(): return
         self.client_address = self.request.connection.context.address
         print("websocket connection success")
+        print(f"headers: cookies: {self.get_cookie('csrftoken')}, headers: {self.request.headers}")
 
     def on_close(self):
         pass

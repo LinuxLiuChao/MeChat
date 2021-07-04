@@ -68,6 +68,7 @@ class RequestBase:
         return False
 
     def logout(self):
+        self.user_name, self.password = None, None
         return self._post("/logout", None)
 
     def post(self, api, body=None):

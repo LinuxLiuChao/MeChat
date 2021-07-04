@@ -15,6 +15,24 @@ address = {
 
 
 class ChatHandler(WsBaseHandler):
+    def open(self):
+        super().open()
+        if self.user_name is None:
+            return
+        user_name = self.user_name
+        self.send_no_read_message(user_name)
+
+        connection = connections.get(user_name)
+        if connection:
+            print("connection already exist. user_name: {}".format(user_name))
+            connection.close()
+
+            connections[user_name] = self
+        else:
+            print("Create new connection. user_name: {}".format(user_name))
+            connections[user_name] = self
+        address[self.client_address] = user_name
+
     def on_message(self, message):
         print("receive message: {}".format(message))
         message = json.loads(message)
@@ -29,7 +47,7 @@ class ChatHandler(WsBaseHandler):
             print("response client: {}".format(str(user_id)))
             self.write_message({"type": "login", "status": "success", "text": "{}".format(str(user_id))})
 
-            self.send_no_read_message(user_id)
+            self.send_no_read_message(user_name)
 
             connection = connections.get(user_name)
             if connection:
@@ -49,13 +67,13 @@ class ChatHandler(WsBaseHandler):
                 print(f"{to_user} is not exist")
                 self.write_message({"type": "login", "status": "failed", "text": "{} is not exist".format(to_user)})
                 return
-            message["to"] = to_user_id
+            message["to"] = to_user
 
             to_user_connect = connections.get(to_user)
             if not to_user_connect:
                 print("to_user disOnline")
                 self.record_message(message, MessageStatus.FAILED.value)
-                self.write_message({"status": "failed", "text": "{} disOnline".format(to_user)})
+                self.write_message({"status": "success", "text": "{} disOnline".format(to_user)})
                 return
 
             try:
@@ -99,7 +117,7 @@ class ChatHandler(WsBaseHandler):
         msg_text = message.get("message")
 
         try:
-            sql = f"""insert into message (from_user_id, to_user_id, message, status) values ({from_user}, {to_user}, '{msg_text}', {status});"""
+            sql = f"""insert into message (from_user_name, to_user_name, message, status) values ('{from_user}', '{to_user}', '{msg_text}', {status});"""
             print(f"sql_statement: {sql}")
             cursor.execute(sql)
             db_conn.commit()
@@ -117,7 +135,7 @@ class ChatHandler(WsBaseHandler):
         db_conn = sqlite3.connect(sqlite3_host)
         cursor = db_conn.cursor()
         try:
-            sql = f"""select * from message where status={MessageStatus.FAILED.value} and to_user_id={to_user};"""
+            sql = f"""select * from message where status={MessageStatus.FAILED.value} and to_user_name='{to_user}';"""
             print(f"sql_statement: {sql}")
             cursor.execute(sql)
             ret = cursor.fetchall()
@@ -149,28 +167,11 @@ class ChatHandler(WsBaseHandler):
             db_conn.close()
             return False
 
-    def get_user_name_by_id(self, user_id):
-        db_conn = sqlite3.connect(sqlite3_host)
-        cursor = db_conn.cursor()
-        try:
-            sql = f"""select user_name from user where id={user_id};"""
-            print(f"sql_statement: {sql}")
-            cursor.execute(sql)
-            ret = cursor.fetchone()
-            cursor.close()
-            db_conn.close()
-            return ret
-        except Exception as err:
-            print("get_user_name_by_id: Exception {}".format(err))
-            cursor.close()
-            db_conn.close()
-
     def send_no_read_message(self, to_user):
         all_not_read_message = self.find_not_read_message(to_user)
         for msg in all_not_read_message:
-            from_user_name = self.get_user_name_by_id(msg[1])[0]
             message = {
-                "from": from_user_name,
+                "from": msg[1],
                 "to": msg[2],
                 "message": msg[3]
             }

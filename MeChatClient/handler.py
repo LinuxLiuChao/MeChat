@@ -15,10 +15,9 @@ class HandlerProcess(MeChatClient):
             "logout": self.logout,
             "chat": self.chat
         }
-        self.user_name = None
-        self.password = None
+        # self.user_name = None
+        # self.password = None
         self.on_line = False
-        # self.run()
         self._request = RequestBase(host, port)
 
     def login(self, *args):
@@ -35,6 +34,10 @@ class HandlerProcess(MeChatClient):
             print(f"login {self.user_name}, {self.password}")
             if self._request.login(self.user_name, self.password):
                 self.on_line = True
+                if self.is_connected is False:
+                    self.set_cookies(self._request._cookies)
+                    print(f"request._cookies: {self._request._cookies['jwt_token']}")
+                    self.run()
         except Exception as err:
             print(f"login Exception: {err}")
 
@@ -43,6 +46,10 @@ class HandlerProcess(MeChatClient):
         if status_code == 200:
             print(f"[logout] success. {args}")
             self.on_line = False
+            self.user_name, self.password = None, None
+            self.ws_cli.close()
+            self.is_connected = False
+            self.ws_cli = None
             return True
         print(f"[logout] failed. status_code:{status_code}, message: {text}")
         return False

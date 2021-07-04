@@ -24,7 +24,7 @@ if __name__ == "__main__":
         elif commands == "help":
             show_menu()
             continue
-        args = commands.split(' ')
+        args = commands.split(' ', maxsplit=2)
         handler.handler(*args)
 
 

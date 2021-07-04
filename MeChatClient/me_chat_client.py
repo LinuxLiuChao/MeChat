@@ -8,15 +8,13 @@ import websocket
 
 class ChatHandler:
     def __init__(self, host, port):
-        url = f"ws://{host}:{port}/chat"
-        self.ws_cli = websocket.WebSocketApp(url,
-                                             on_open=self.on_open,
-                                             on_message=self.on_message,
-                                             on_error=self.on_error,
-                                             on_close=self.on_close)
+        self.url = f"ws://{host}:{port}/chat"
+        self.ws_cli = None
         self.is_connected = False
         self.user_name = None
+        self.password = None
         self.user_id = None
+        self.cookies = None
         # print(dir(self.ws_cli))
 
     def on_open(self, ws):
@@ -47,6 +45,8 @@ class ChatHandler:
 
     def on_close(self, ws):
         print("ws closed")
+        self.user_name = None
+        self.user_id = None
         self.is_connected = False
 
     def send_message(self, message):
@@ -59,20 +59,31 @@ class ChatHandler:
                 break
             time.sleep(1)
         else:
-            print("Please connect server first")
+            print("Please login first")
 
     def run_forever(self):
         print("connecting to server")
         try:
+            self.ws_cli = websocket.WebSocketApp(self.url,
+                                                 on_open=self.on_open,
+                                                 on_message=self.on_message,
+                                                 on_error=self.on_error,
+                                                 on_close=self.on_close,
+                                                 cookie=self.cookies)
             self.ws_cli.run_forever()
         except Exception as err:
             print("run_forever Exception: {}".format(err))
-        finally:
+        # finally:
             time.sleep(1)
             self.run_forever()
 
-    def set_cookie(self, cookie):
-        self.ws_cli.cookie = cookie
+    def set_cookies(self, cookies):
+        cookies_str = None
+        for key, value in cookies.items():
+            if cookies_str is None: cookies_str = ""
+            cookies_str += f"{key}={value};"
+
+        self.cookies = cookies_str
 
 
 class MeChatClient(ChatHandler):
@@ -90,7 +101,7 @@ class MeChatClient(ChatHandler):
     def send_message_to_user(self, to_user, message):
         message = {
             "type": "chat",
-            "from": self.user_id,
+            "from": self.user_name,
             "to": to_user,
             "message": message
         }
@@ -98,11 +109,12 @@ class MeChatClient(ChatHandler):
 
 
 if __name__ == "__main__":
-    user_name = input("Please input your name: ")
-    to_user = input("Please input send to message user_name: ")
-    client = MeChatClient("ws://localhost:9888/chat")
+    client = MeChatClient("localhost", 9888)
+    client.set_cookies("csrftoken=DhSf0z9Ouu5f1SbfGWBg5BuBe1UuJMLr;")
     client.run()
-    client.send_user_info(user_name)
-    while True:
-        message = input(">>>: ")
-        client.send_message_to_user(to_user, message)
+
+    client.send_message_to_user("Bob", "hello, Bob")
+
+    # while True:
+    #     message = input(">>>: ")
+    #     client.send_message_to_user(to_user, message)
